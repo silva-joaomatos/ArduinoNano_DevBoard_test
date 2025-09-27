@@ -136,12 +136,12 @@ void setup() {
   Serial.begin(115200);
 
   // Just to know which program is running on my Arduino
-    Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_IRREMOTE));
+   // Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_IRREMOTE));
 
     // Start the receiver and if not 3. parameter specified, take LED_BUILTIN pin from the internal boards definition as default feedback LED
-    IrReceiver.begin(IR_RECEIVE_PIN, ENABLE_LED_FEEDBACK);
+    IrReceiver.begin(IR_RECEIVE_PIN, ENABLE_LED_FEEDBACK,A4);
 
-    Serial.print(F("Ready to receive IR signals of protocols: "));
+  //  Serial.print(F("Ready to receive IR signals of protocols: "));
     printActiveIRProtocols(&Serial);
 //   Serial.println(F("at pin " STR(IR_RECEIVE_PIN)));
   myservo.attach(12);
@@ -180,8 +180,7 @@ void loop() {
    ULS mode must be enabled only without IR mode (interrups conflit)
    Bug in Pos during IR mode
   */
-    lc.setRow(0,5,data_val[temp][5]);
-
+   //
    if (state == irstate){
     if (IrReceiver.decode()) {
 
@@ -409,11 +408,11 @@ void loop() {
         allon();
         temp = 5;
       }
-      //for(int i=0;i<8;i++)
-      //{
+      for(int i=0;i<8;i++)
+      {
         //Serial.println(data_val[temp][i]);
-        lc.setRow(0,5,data_val[temp][5]);
-     // }
+        lc.setRow(0,5,data_val[temp][i]);
+      }
     } 
    if(state == pirstate){
     pir_val= digitalRead(pir);
