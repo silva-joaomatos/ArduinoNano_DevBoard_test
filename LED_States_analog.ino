@@ -35,6 +35,7 @@ int temp = 0;
 int pir = 4;
 int DHT11PIN = 2;
 int pir_val=0;
+int i=0;
 unsigned int a_in=0;
 unsigned int pos=0;
 unsigned long previousMillis1s = 0;
@@ -46,6 +47,7 @@ unsigned long period500ms = 500;
 unsigned long period100ms = 100;
 unsigned long period10ms = 10;
 unsigned long  t_wait=0;
+uint8_t choose_mode =0;
 float duration;
 float distance;  
 uint8_t ulsmode =0;
@@ -180,9 +182,9 @@ void loop() {
    ULS mode must be enabled only without IR mode (interrups conflit)
    Bug in Pos during IR mode
   */
-    lc.setRow(0,5,data_val[temp][5]);
+   // lc.setRow(0,5,data_val[temp][5]);
 
-   if (state == irstate){
+   if (state == irstate || 1){
     if (IrReceiver.decode()) {
 
           /*
@@ -209,17 +211,33 @@ void loop() {
               Serial.println(F("Repeat received. Here you can repeat the same action as before."));
           } 
           else {
-              if (IrReceiver.decodedIRData.command == 0x5E) {
+              if (IrReceiver.decodedIRData.command == 0x5E) { //3
                   Serial.println(F("Received command 0x10."));
-                  alloff();
-                  digitalWrite(ledYellow, HIGH);
+                  if(choose_mode ==0){
+                    alloff();
+                    digitalWrite(ledYellow, HIGH);
+                  }
+                  else{
+                     state = motor;
+                    lcd.setCursor(0,1);
+                    lcd.println("MOTOR");
+                    choose_mode = 0;
+                  }
               } 
-              else if (IrReceiver.decodedIRData.command == 0xC) {
+              else if (IrReceiver.decodedIRData.command == 0xC) { //1
                   Serial.println(F("Received command 0x11."));
-                  alloff();
-                  digitalWrite(ledBlue,HIGH);
+                  if (choose_mode ==0){
+                    alloff();
+                    digitalWrite(ledBlue,HIGH);
+                  }
+                  else{
+                    state = blinkall;
+                    lcd.setCursor(0,1);
+                    lcd.println("BLINKALL");
+                    choose_mode = 0;
+                  }
               }
-              else if (IrReceiver.decodedIRData.command == 0x45){
+              else if (IrReceiver.decodedIRData.command == 0x45){ //ON-OFF
                 Serial.println(F("Received command 0x45."));
                 if (ledstate == OFF){
                   allon();
@@ -227,23 +245,60 @@ void loop() {
                 else
                   alloff();
               }
-              else if (IrReceiver.decodedIRData.command == 0x18){
+              else if (IrReceiver.decodedIRData.command == 0x18){ //2
                 Serial.println(F("Received command 0x18."));
-                alloff();
-                digitalWrite(ledGreen, HIGH);    
+                if (choose_mode ==0){
+                  alloff();
+                  digitalWrite(ledGreen, HIGH);
+                }
+                else{
+                  state = blinksequence;
+                  lcd.setCursor (0,1);
+                  lcd.println("SEQUENCE");
+                  choose_mode =0;
+                }      
               }
-              else if (IrReceiver.decodedIRData.command == 0x8){
+              else if (IrReceiver.decodedIRData.command == 0x8){ //4
                 Serial.println(F("Received command 0x8."));
-                alloff();
-                digitalWrite(ledRed, HIGH);    
+                if (choose_mode == 0){
+                  alloff();
+                  digitalWrite(ledRed, HIGH);
+                }
+                else {
+                  state = pirstate;
+                  choose_mode =0;
+                }    
+              }
+              else if (IrReceiver.decodedIRData.command == 0x1C){ //5
+                Serial.println(F("Received command 0x1C."));
+                if (choose_mode == 0){
+                  //To-Do
+                }
+                else {
+                  state = dht11state;
+                  choose_mode =0;
+                }    
+              }
+              else if (IrReceiver.decodedIRData.command == 0x5A){ //6
+                Serial.println(F("Received command 0x5A."));
+                if (choose_mode == 0){
+                  //To-Do
+                }
+                else {
+                  lcd.clear();
+                  state = analogseq;
+                  choose_mode =0;
+                }    
               }
               else if (IrReceiver.decodedIRData.command == 0x43){
                 Serial.println(F("Received command 0x43."));              
                 blksequence(seq);
                 seq++;
-                 if( seq >=4) seq=0;
-                pos+=5;
-                if(pos >=178) pos=180;
+                if( seq >=4) seq=0;
+                if(pos <=175)
+                  pos+=5;
+                else
+                 pos=180;
                 myservo.write(pos); 
                 lcd.setCursor(0,1); 
                 lcd.print("Motor Pos: ");
@@ -254,8 +309,11 @@ void loop() {
                 blksequence(seq);
                 seq--;
                 if (seq <0) seq=4;
-                pos-=5;
-                if(pos <=10) pos=0;
+                //pos-=5;
+                if(pos >=5) 
+                  pos-=5;
+                else 
+                  pos=0;
                 myservo.write(pos);
                 lcd.setCursor(0,1); 
                 lcd.print("Motor Pos: ");
@@ -264,15 +322,16 @@ void loop() {
               }
               else if (IrReceiver.decodedIRData.command == 0x47){
                 Serial.println(F("Received command 0x47."));
-                //mode++; 
+                lcd.clear();
+                lcd.println("Choose Mode");
+                choose_mode = 1; 
+                state = 0;
               }
       }
    }
    }
   if ((currentMillis-previousMillis1s) >= period1s){
-    previousMillis1s = currentMillis;
-    //Serial.println(analogRead(inputred));
-    
+    previousMillis1s = currentMillis;    
     if (state == blinkall){
       if (ledstate == ON)
         alloff();
@@ -307,12 +366,12 @@ void loop() {
     }
     if (state == dht11state){
       int chk = dht11.read(DHT11PIN);
-    lcd.clear();
-    lcd.print("H(%): ");
-    lcd.println((float)dht11.humidity,2);
-    lcd.setCursor(0,1);
-    lcd.print("T(C): ");
-    lcd.println((float)dht11.temperature,2);
+      lcd.clear();
+      lcd.print("H(%): ");
+      lcd.println((float)dht11.humidity,2);
+      lcd.setCursor(0,1);
+      lcd.print("T(C): ");
+      lcd.println((float)dht11.temperature,2);
 
     }
    
@@ -321,15 +380,15 @@ void loop() {
   if((currentMillis - previousMillis10ms) >= period10ms){
     previousMillis10ms = currentMillis;
     if (ulsmode == 1){
-    digitalWrite(TrigPin, LOW);  
-	  delayMicroseconds(2);  
-	  digitalWrite(TrigPin, HIGH);  
-	  delayMicroseconds(10);  
-	  digitalWrite(TrigPin, LOW);  
-    noInterrupts();
-    duration = pulseIn(EchoPin, HIGH);  
-    interrupts();
-    distance = (duration*.0343)/2; 
+      digitalWrite(TrigPin, LOW);  
+      delayMicroseconds(2);  
+      digitalWrite(TrigPin, HIGH);  
+      delayMicroseconds(10);  
+      digitalWrite(TrigPin, LOW);  
+      noInterrupts();
+      duration = pulseIn(EchoPin, HIGH);  
+      interrupts();
+      distance = (duration*.0343)/2; 
     }
     if (state == motor){
       if (pos >= 180) pos = 180;
@@ -340,6 +399,11 @@ void loop() {
   }
   if((currentMillis - previousMillis100ms) >= period100ms){
     previousMillis100ms = currentMillis;
+    /*if(state = motorsweep){
+      myservo.write(pos);
+      pos++;
+    todo
+    }*/
     if(state ==motor){
       a_in= analogRead(A6);
       pos = map(a_in,0,1023,0,180);
@@ -409,11 +473,12 @@ void loop() {
         allon();
         temp = 5;
       }
-      //for(int i=0;i<8;i++)
-      //{
+      while(i<8)
+      {
         //Serial.println(data_val[temp][i]);
         lc.setRow(0,5,data_val[temp][5]);
-     // }
+        i++;
+     }
     } 
    if(state == pirstate){
     pir_val= digitalRead(pir);
