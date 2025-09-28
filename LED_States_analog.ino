@@ -49,7 +49,7 @@ unsigned long  t_wait=0;
 float duration;
 float distance;  
 uint8_t ulsmode =0;
-LedControl lc=LedControl(DIN,CLK,CS,6);
+LedControl lc=LedControl(DIN,CLK,CS,4);
 byte data_val[6][8]= {
 {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 {0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00},
@@ -133,17 +133,13 @@ void setup() {
         //Serial.println(data_val[temp][i]);
         lc.setRow(0,i,data_val[4][i]);
       }*/
-  Serial.begin(115200);
+  //Serial.begin(115200);
 
   // Just to know which program is running on my Arduino
    // Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_IRREMOTE));
 
     // Start the receiver and if not 3. parameter specified, take LED_BUILTIN pin from the internal boards definition as default feedback LED
-    IrReceiver.begin(IR_RECEIVE_PIN, ENABLE_LED_FEEDBACK,A4);
-
-  //  Serial.print(F("Ready to receive IR signals of protocols: "));
-    printActiveIRProtocols(&Serial);
-//   Serial.println(F("at pin " STR(IR_RECEIVE_PIN)));
+  
   myservo.attach(12);
 
   //lc.setRow(0,2,data_val[5][2]);
@@ -167,7 +163,7 @@ void setup() {
   pinMode (A6, INPUT);
   pinMode(DHT11PIN, INPUT);
   //pinMode(4, INPUT);*/
-    lc.shutdown(0,false);//MAX72XX is in power saving mode when starting
+  lc.shutdown(0,false);//MAX72XX is in power saving mode when starting
   lc.setIntensity(0,8);//Set the brightness to the maximum
   lc.clearDisplay(0); //Clear display
 }
@@ -181,6 +177,7 @@ void loop() {
    Bug in Pos during IR mode
   */
    //
+   
    if (state == irstate){
     if (IrReceiver.decode()) {
 
@@ -458,7 +455,7 @@ void loop() {
 
     if(digitalRead(inputBlue) == LOW){
       state = analogseq;
-    
+      IrReceiver.stop();
       lcd.clear();
       lcd.print("MODE = AN SEQ!");
       //noInterrupts();
@@ -481,6 +478,11 @@ void loop() {
     }
     if((digitalRead(inputBlue) == LOW) && (digitalRead(inputYellow)== LOW) && (digitalRead(inputGreen)== LOW)){
       state = irstate;
+      IrReceiver.begin(IR_RECEIVE_PIN, ENABLE_LED_FEEDBACK,A4);
+  
+  //  Serial.print(F("Ready to receive IR signals of protocols: "));
+    printActiveIRProtocols(&Serial);
+//   Serial.println(F("at pin " STR(IR_RECEIVE_PIN)));
       lcd.clear();
       lcd.print("MODE = IR");
 
