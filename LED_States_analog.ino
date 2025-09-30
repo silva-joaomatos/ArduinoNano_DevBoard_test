@@ -40,6 +40,7 @@ int pir_val=0;
 int i=0;
 unsigned int a_in=0;
 unsigned int pos=0;
+unsigned int pos1=0;
 unsigned long previousMillis1s = 0;
 unsigned long previousMillis500ms=0;
 unsigned long previousMillis100ms=0;
@@ -93,6 +94,7 @@ byte data_val[6][8]= {
 #define dht11state 7
 #define irstate 8
 #define ulstate 9
+#define joystick 10
 #define ANALOG_X_PIN A2 
 #define ANALOG_Y_PIN A3 
 #define ANALOG_BUTTON_PIN A4 
@@ -293,6 +295,7 @@ void loop() {
       pos++;
     todo
     }*/
+  if ((state == joystick) ||1){
   analog.x = readAnalogAxisLevel(ANALOG_X_PIN) - ANALOG_X_CORRECTION; 
 	 analog.y = readAnalogAxisLevel(ANALOG_Y_PIN) - ANALOG_Y_CORRECTION;
 	 analog.button.pressed = isAnalogButtonPressed(ANALOG_BUTTON_PIN); 
@@ -308,8 +311,9 @@ void loop() {
     i++;
     if(i>7) i=7;
     }
-    if( pos>=0){
-        myservo.write(pos--);
+    if( pos>=10){
+        pos-=10;
+        myservo.write(pos);
 
       }
     Serial.println("RIGHT:");
@@ -324,8 +328,9 @@ void loop() {
       lc.setLed(0,i,j,true);
       i--;
       if(i<0) i=0;
-      if( pos<=180){
-        myservo.write(pos++);
+      if( pos<=170){
+        pos+=10;
+        myservo.write(pos);
 
       }
     }
@@ -342,12 +347,12 @@ void loop() {
       j++;
       if(j>7) j=7;
      }
-     
     Serial.println("UP:");
     Serial.println(i);
     Serial.println(j);
-    if( pos<=180){
-        servo1.write(pos++);
+    if( pos1<=170){
+        pos1+=10;
+        servo1.write(pos1);
 
       }
   }
@@ -362,8 +367,9 @@ void loop() {
     Serial.println(j);
     j--;
     if(j<=0) j=0;
-    if( pos>=0){
-        servo1.write(pos--);
+    if( pos1>=10){
+        pos1-=10;
+        servo1.write(pos1);
 
       }
     
@@ -379,7 +385,7 @@ void loop() {
     buttpressed = false;
   }
   buttedge=analog.button.pressed; 
-
+  }
     if(state ==motor){
       a_in= analogRead(A6);
       pos = map(a_in,0,1023,0,180);
@@ -524,7 +530,8 @@ void loop() {
       lcd.print("MODE = IR");
 
     }
-    
+    Serial.println(pos);
+    Serial.println(pos1);
   }
 }
 byte readAnalogAxisLevel(int pin) 
