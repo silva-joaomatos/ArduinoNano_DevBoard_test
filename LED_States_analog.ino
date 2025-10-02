@@ -23,6 +23,8 @@ dht11 dht11;
 LiquidCrystal_I2C lcd(0x27,16,2); // set the LCD address to 0x27 for a 16 chars and 2line display
 
 
+
+
 int inputYellow=5;
 int inputGreen = 6;
 int inputBlue= 7;
