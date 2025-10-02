@@ -1,4 +1,4 @@
-//#include <IRremoteInt.h>
+//#include <IRremoteInt.h> 
 /*arduino-cli compile --fqbn arduino:avr:uno --port /dev/cu.usbmodem2101 --upload <sketch path>*/
 #include <Servo.h>
 #include <Wire.h>
