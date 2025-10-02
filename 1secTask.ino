@@ -1,4 +1,4 @@
-void onesecTask(){
+void onesecTask(){ 
   if (state == blinkall){
       if (ledstate == ON)
         alloff();
